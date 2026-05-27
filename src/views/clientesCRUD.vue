@@ -56,7 +56,6 @@ onMounted(async () => {
             <th>Razón Social</th>
             <th>Correo</th>
             <th>Teléfono</th>
-            <th>ID Usuario</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
