@@ -81,20 +81,22 @@ const actualizarDatos = async () =>  {
   <form @submit.prevent="actualizarDatos">
     <div>
       <label>Nombre</label>
-      <input type="email" v-model="nombre" required />
+      <input type="text" v-model="nombre" required />
     </div>
 
     <div>
       <label>Correo</label>
-      <input type="text" v-model="correo" required />
+      <input type="email" v-model="correo" required />
     </div>
 
     <div>
       <label>Contraseña (Opcional)</label>
-      <!-- Sin 'required' para que no obligue a cambiarla siempre -->
+
       <input type="password" v-model="password" placeholder="Dejar en blanco para mantener actual" />
     </div>
-
+    <RouterLink :to="{ name: 'clientesCRUD' }">
+            <button type="button" class="btn-cancelar">Cancelar</button>
+          </RouterLink>
     <button type="submit">Guardar Cambios</button>
   </form>
 </div>
