@@ -1,17 +1,22 @@
-import './assets/main.css'
 import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
-// 1. Importas tus dos vistas por separado
+// 1. Estilos y dependencias de Vuetify
+import 'vuetify/styles'
+import { createVuetify } from 'vuetify'
+import { aliases, mdi } from 'vuetify/iconsets/mdi'
+import '@mdi/font/css/materialdesignicons.css' 
+
+// 2. Vistas del Router
 import InicioSesion from './views/inicioSesion.vue'
 import ClientesCRUD from './views/clientesCRUD.vue'
 import RegistrarCuenta from './views/registrarCuenta.vue'
 import UsuarioUpdate from './views/usuarioUpdate.vue'
 
-import App from '../App.vue'
+// Mantén tu importación original si el archivo está ahí arriba
+import App from '../App.vue' 
 
-
-// 2. Creas el router aquí mismo
+// 3. Configuración del Router
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -22,7 +27,19 @@ const router = createRouter({
   ]
 })
 
+// 4. Inicialización de Vuetify
+const vuetify = createVuetify({
+  icons: {
+    defaultSet: 'mdi',
+    aliases,
+    sets: { mdi },
+  },
+})
+
 const app = createApp(App)
 
-app.use(router) // 3. Vinculas el router correcto
+// 5. Registro de plugins en la app
+app.use(router)
+app.use(vuetify)
+
 app.mount('#app')

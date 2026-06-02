@@ -3,8 +3,9 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 
-import FormularioClienteModal from '/src/components/FormularioClienteModal.vue'
-import ActualizarClienteModal from '/src/components/actualizarClienteModal.vue'
+import FormularioClienteModal from '/src/components/FormularioClienteModal.vue';
+import ActualizarClienteModal from '/src/components/actualizarClienteModal.vue';
+import userSettings from '@/components/userSettings.vue';
 import BotonEliminar from '/src/components/borrarCliente.vue'
 
 const id_usuario = ref(null)
@@ -12,71 +13,91 @@ const nombre = ref('')
 const clientes = ref([])
 const router = useRouter()
 
+const cabeceras = ref([
+  { title: 'NIT', key: 'nit' },
+  { title: 'Razón Social', key: 'razon_social' },
+  { title: 'Correo', key: 'correo' },
+  { title: 'Teléfono', key: 'telefono' },
+  { title: 'Estado', key: 'estado', value: item => item.estado ? 'Activo' : 'Inactivo' },
+  { title: 'Acciones', key: 'acciones', sortable: false }
+])
+
+
+
 const mostrarModalNuevo = ref(false)
+const mostrarAjustesDeUsuario = ref(false)
 const mostrarModalActualizar = ref(false)
 const clienteAEditar = ref(null)
 
+// NUEVO
 const abrirModalNuevo = () => {
   mostrarModalNuevo.value = true
 }
 
+
+// EDITAR
 const abrirModalEditar = (cliente) => {
   clienteAEditar.value = cliente
   mostrarModalActualizar.value = true
 }
 
+const nombreActualizado = (nuevoNombre) => {
+  // Aquí recibes el texto del hijo y actualizas tu estado/localStorage
+  nombre.value = nuevoNombre
+}
+
+// CARGAR CLIENTES
 const cargarClientes = async () => {
   try {
     const token = localStorage.getItem("token")
 
     const respuesta = await axios.get(`http://localhost:3000/clientes`, {
-      headers: {
-        token: `Bearer ${token}`
-      }
+      headers: { token: `Bearer ${token}` }
     })
 
     clientes.value = respuesta.data
   } catch (error) {
-    console.error("Error al cargar los datos del cliente:", error)
+    console.error("Error al cargar clientes:", error)
 
-    if (error.status === 401 || error.response?.status === 401) {
+    if (error.response?.status === 401) {
       router.push({ name: 'inicioSesion' })
     }
   }
 }
 
+// ACTUALIZAR LISTA
 const actualizarClienteEnLaLista = (cliente_actualizado) => {
-  const indice = clientes.value.findIndex(
+  const index = clientes.value.findIndex(
     c => c.id_cliente === cliente_actualizado.id_cliente
   )
 
-  if (indice !== -1) {
-    clientes.value[indice] = {
-      ...clientes.value[indice],
+  if (index !== -1) {
+    clientes.value[index] = {
+      ...clientes.value[index],
       ...cliente_actualizado
     }
   }
 }
 
-const removerClienteDeLaLista = (id_cliente_borrado) => {
+// ELIMINAR LISTA
+const removerClienteDeLaLista = (id) => {
   clientes.value = clientes.value.filter(
-    cliente => cliente.id_cliente !== id_cliente_borrado
+    c => c.id_cliente !== id
   )
 }
 
+// SESIÓN
 onMounted(async () => {
   try {
     const info = JSON.parse(localStorage.getItem("info"))
 
     if (info) {
-      const id_token = info.id
-      const nombre_token = info.nombre
-
-      if (id_token) id_usuario.value = id_token
-      if (nombre_token) nombre.value = nombre_token
+      id_usuario.value = info.id
+      nombre.value = info.nombre
     }
-  } catch (error) {
-    console.error("Error al cargar los datos de sesión:", error)
+    
+  } catch (e) {
+    console.error(e)
   }
 
   await cargarClientes()
@@ -84,89 +105,79 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
-    <header>
-      <h2>
-        Gestión de Clientes (Usuario:
-        <RouterLink
-          style="cursor: pointer;"
-          :to="{ name: 'usuarioUpdate' }"
-        >
-          {{ nombre }}
-        </RouterLink>
-        )
-      </h2>
+  <v-container class="d-flex flex-column">
 
-      <button type="button" @click="abrirModalNuevo">
-        + Registrar Cliente
-      </button>
-    </header>
-
-    <main>
-      <table border="1">
-        <thead>
-          <tr>
-            <th>NIT</th>
-            <th>Razón Social</th>
-            <th>Correo</th>
-            <th>Teléfono</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr
-            v-for="cliente in clientes"
-            :key="cliente.id_cliente"
-          >
-            <td>{{ cliente.nit }}</td>
-            <td>{{ cliente.razon_social }}</td>
-            <td>{{ cliente.correo }}</td>
-            <td>{{ cliente.telefono }}</td>
-            <td>{{ cliente.estado ? 'Activo' : 'Inactivo' }}</td>
-
-            <td>
-              <button
-                type="button"
-                title="Editar"
-                @click="abrirModalEditar(cliente)"
-                style="cursor: pointer; margin-right: 5px;"
-              >
-                ✏️
-              </button>
-
-              <BotonEliminar
-                :idCliente="cliente.id_cliente"
-                :razonSocial="cliente.razon_social"
-                @eliminadoExitosamente="removerClienteDeLaLista"
+    <!-- HEADER -->
+    <v-row class="mb-4">
+      <v-col cols="12" sm="8">
+        <h2 class="text-h5 font-weight-bold">
+          Gestión de Clientes
+          <div class="">
+          <span class="text-subtitle-1 text-medium-emphasis">
+            (Usuario:<userSettings
+              :nombre="nombre"
+              @actualizarNombre="nombreActualizado"
+              @cerrar="mostrarAjustesDeUsuario = false"
               />
-            </td>
-          </tr>
 
-          <tr v-if="clientes.length === 0">
-            <td colspan="6" align="center">
-              No tienes clientes registrados todavía.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </main>
+)
+          </span>
+        </div>
+        </h2>
+      </v-col>
 
+      <v-col cols="12" sm="4" class="d-flex justify-end">
+        <v-btn color="primary" prepend-icon="mdi-plus" @click="abrirModalNuevo">
+          Registrar Cliente
+        </v-btn>
+      </v-col>
+    </v-row>
+
+    <!-- TABLE -->
+    <v-row>
+      <v-col cols="12">
+        <v-card>
+          <v-data-table
+            :items="clientes"
+            :headers="cabeceras"
+            item-value="id_cliente"
+            items-per-page="-1"
+            fixed-header
+            hide-default-footer
+          >
+            <template #item.acciones="{ item }">
+              <ActualizarClienteModal
+                :cliente="item"
+                @clienteActualizado="actualizarClienteEnLaLista"
+                @eliminado="removerClienteDeLaLista"
+              />
+            </template>
+          </v-data-table>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- ✅ MODAL CREAR (v-model) -->
     <FormularioClienteModal
-      v-if="mostrarModalNuevo"
+      v-model="mostrarModalNuevo"
       :idUsuario="id_usuario"
-      @cerrar="mostrarModalNuevo = false"
       @clienteGuardado="cargarClientes"
     />
 
-    <ActualizarClienteModal
-      v-if="mostrarModalActualizar"
-      :key="clienteAEditar?.id_cliente"
-      :cliente="clienteAEditar"
-      :idUsuario="id_usuario"
-      @cerrar="mostrarModalActualizar = false"
-      @clienteActualizado="actualizarClienteEnLaLista"
-    />
-  </div>
+    <!-- MODAL ACTUALIZAR -->
+    
+
+   
+
+  </v-container>
 </template>
+
+<style scoped>
+:deep(.v-data-table-header__content) {
+  justify-content: center !important;
+}
+
+:deep(td) {
+  text-align: center !important;
+}
+</style>

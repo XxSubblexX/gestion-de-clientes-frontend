@@ -2,29 +2,19 @@
 import axios from 'axios'
 
 // Recibe los datos necesarios del cliente actual desde la fila de la tabla
-const props = defineProps({
-  idCliente: {
-    type: Number,
-    required: true
-  },
-  razonSocial: {
-    type: String,
-    required: true
-  }
-})
-
+const props = defineProps(['cliente', 'id_cliente'])
 // Evento para avisar al componente padre (clientesCRUD) que el cliente fue borrado
-const emit = defineEmits(['eliminadoExitosamente'])
+const emit = defineEmits(['removerClienteDeLaLista'])
 
 const ejecutarEliminacion = async () => {
-  const confirmar = confirm(`¿Estás seguro de que deseas eliminar al cliente "${props.razonSocial}"?`)
+  const confirmar = confirm(`¿Estás seguro de que deseas eliminar al cliente "${props.cliente}"?`)
   if (!confirmar) return 
 
   try {
     const token = localStorage.getItem("token")
     
     // Petición DELETE a tu backend
-    await axios.delete(`http://localhost:3000/clientes/${props.idCliente}`, {
+    await axios.delete(`http://localhost:3000/clientes/${props.id_cliente}`, {
       headers: {
         'token': `Bearer ${token}`
       }
@@ -33,7 +23,7 @@ const ejecutarEliminacion = async () => {
     alert("Cliente eliminado con éxito.")
     
     // Emitimos el evento hacia el padre enviando el ID del cliente borrado
-    emit('eliminadoExitosamente', props.idCliente)
+    emit('removerClienteDeLaLista', props.id_cliente)
   } catch (error) {
     console.error("Error al eliminar el cliente:", error)
     alert("No se pudo eliminar el cliente. Inténtalo de nuevo.")

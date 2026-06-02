@@ -1,107 +1,261 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
-import { useRouter } from 'vue-router'; 
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
 
-const id_usuario = ref(null);
-const nombre = ref("");
-const correo = ref("");
-const password = ref(""); 
-const router = useRouter(); 
+const router = useRouter()
 
+// =====================
+// 🔥 DATOS USUARIO
+// =====================
+const id_usuario = ref(null)
+const nombre = ref("")
+const correo = ref("")
+const password = ref("[]")
+
+// =====================
+// 🔥 UI STATES
+// =====================
+const mostrarDialogEliminar = ref(false)
+const confirmText = ref("")
+const loadingEliminar = ref(false)
+
+// =====================
+// 📥 CARGAR USUARIO
+// =====================
 onMounted(async () => {
-    try {
-        const info = JSON.parse(localStorage.getItem("info"));
-        const token = localStorage.getItem("token");
-
-        // Si el localStorage está vacío, evitamos que el código explote
-        if (!info || !token) {
-            console.warn("No se encontró información de sesión.");
-            return;
-        }
-
-        const id_token = info.id;
-        const nombre_token = info.nombre;
-        
-        if (id_token) id_usuario.value = id_token;
-        if (nombre_token) nombre.value = nombre_token;
-
-        // CORRECCIÓN: Se cerró correctamente la llave del objeto de configuración de Axios
-        const respuesta = await axios.get(`http://localhost:3000/usuarios/${id_usuario.value}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });      
-
-        if (respuesta.data && respuesta.data.correo) {
-            correo.value = respuesta.data.correo;
-        }
-
-        console.log("Datos cargados:", respuesta);
-    } catch (error) {
-        console.error("Error al cargar la información inicial:", error);
-    }
-});
-
-const actualizarDatos = async () =>  {
   try {
-    const token = localStorage.getItem("token");
-    
-    const datosActualizados = {
-      nombre: nombre.value,
-      correo: correo.value
-    };
+    const info = JSON.parse(localStorage.getItem("info"))
+    const token = localStorage.getItem("token")
 
-    if (password.value && password.value.trim() !== "") {
-      datosActualizados.password = password.value;
-    }
+    if (!info || !token) return
 
-    // AÑADIDO: Enviamos el token también en el PUT para que el backend te deje guardar
-    await axios.put(`http://localhost:3000/usuarios/${id_usuario.value}`, datosActualizados, {
+    id_usuario.value = info.id
+    nombre.value = info.nombre
+
+    const res = await axios.get(
+      `http://localhost:3000/usuarios/${id_usuario.value}`,
+      {
         headers: {
-            'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         }
-    });
+      }
+    )
 
-    alert("¡Datos actualizados con éxito!");
-    window.location.reload();
+    correo.value = res.data?.correo || ""
+    password.value = ""
 
   } catch (error) {
-    console.error("Error al actualizar el usuario", error);
-    alert("No se pudieron guardar los cambios. Intenta de nuevo.");
+    console.error(error)
+  }
+})
+
+// =====================
+// 💾 ACTUALIZAR USUARIO
+// =====================
+const actualizarDatos = async () => {
+  try {
+    const token = localStorage.getItem("token")
+
+    const data = {
+      nombre: nombre.value,
+      correo: correo.value
+    }
+
+    if (password.value?.trim()) {
+      data.password = password.value
+    }
+
+    await axios.put(
+      `http://localhost:3000/usuarios/${id_usuario.value}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    password.value = ""
+
+    alert("Datos actualizados correctamente")
+
+  } catch (error) {
+    console.error(error)
+    alert("No se pudieron guardar los cambios")
+  }
+}
+
+// =====================
+// 🚪 CERRAR SESIÓN
+// =====================
+const cerrarSesion = () => {
+  localStorage.removeItem("token")
+  localStorage.removeItem("info")
+
+  router.push({ name: "inicioSesion" })
+}
+
+// =====================
+// 🗑️ ELIMINAR USUARIO
+// =====================
+const eliminarUsuario = async () => {
+  try {
+    loadingEliminar.value = true
+
+    const token = localStorage.getItem("token")
+
+    await axios.delete(
+      `http://localhost:3000/usuarios/${id_usuario.value}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    localStorage.removeItem("token")
+    localStorage.removeItem("info")
+
+    router.push({ name: "inicioSesion" })
+
+  } catch (error) {
+    console.error(error)
+    alert("No se pudo eliminar la cuenta")
+  } finally {
+    loadingEliminar.value = false
   }
 }
 </script>
 
-
 <template>
-<div>
-  <h2>Modificar Cuenta</h2>
-  
-  <form @submit.prevent="actualizarDatos">
-    <div>
-      <label>Nombre</label>
-      <input type="text" v-model="nombre" required />
-    </div>
 
-    <div>
-      <label>Correo</label>
-      <input type="email" v-model="correo" required />
-    </div>
+<v-container class="d-flex justify-center">
 
-    <div>
-      <label>Contraseña (Opcional)</label>
+  <v-card width="600" class="pa-6" rounded="xl" elevation="10">
 
-      <input type="password" v-model="password" placeholder="Dejar en blanco para mantener actual" />
-    </div>
-    <RouterLink :to="{ name: 'clientesCRUD' }">
-            <button type="button" class="btn-cancelar">Cancelar</button>
-          </RouterLink>
-    <button type="submit">Guardar Cambios</button>
-  </form>
-</div>
+    <!-- HEADER -->
+    <v-card-title class="text-h5 font-weight-bold">
+      Modificar Cuenta
+    </v-card-title>
+
+    <v-divider class="my-4" />
+
+    <!-- FORM -->
+    <v-text-field
+      v-model="nombre"
+      label="Nombre"
+      variant="outlined"
+      class="mb-3"
+      prepend-inner-icon="mdi-account"
+    />
+
+    <v-text-field
+      v-model="correo"
+      label="Correo"
+      variant="outlined"
+      class="mb-3"
+      prepend-inner-icon="mdi-email"
+    />
+
+    <v-text-field
+      v-model="password"
+      label="Contraseña (Opcional)"
+      type="password"
+      variant="outlined"
+      class="mb-4"
+      prepend-inner-icon="mdi-lock"
+    />
+
+    <!-- BOTÓN GUARDAR -->
+    <v-btn
+      color="primary"
+      block
+      class="mb-3"
+      prepend-icon="mdi-content-save"
+      @click="actualizarDatos"
+    >
+      Guardar Cambios
+    </v-btn>
+
+    <!-- LOGOUT -->
+    <v-btn
+      color="grey-darken-1"
+      variant="tonal"
+      block
+      class="mb-3"
+      prepend-icon="mdi-logout"
+      @click="cerrarSesion"
+    >
+      Cerrar sesión
+    </v-btn>
+
+    <!-- ELIMINAR -->
+    <v-btn
+      color="error"
+      variant="tonal"
+      block
+      prepend-icon="mdi-delete"
+      @click="mostrarDialogEliminar = true"
+    >
+      Eliminar cuenta
+    </v-btn>
+
+  </v-card>
+
+</v-container>
+
+<!-- DIALOG ELIMINAR -->
+<v-dialog v-model="mostrarDialogEliminar" max-width="450">
+  <v-card rounded="xl" class="pa-4">
+
+    <v-card-title class="text-red font-weight-bold">
+      Eliminar cuenta
+    </v-card-title>
+
+    <v-card-text>
+      <p class="mb-3">
+        Escribe <b>ELIMINAR</b> para confirmar
+      </p>
+
+      <v-text-field
+        v-model="confirmText"
+        label="ELIMINAR"
+        variant="outlined"
+      />
+    </v-card-text>
+
+    <v-card-actions>
+      <v-spacer />
+
+      <v-btn variant="text" @click="mostrarDialogEliminar = false">
+        Cancelar
+      </v-btn>
+
+      <v-btn
+        color="error"
+        :loading="loadingEliminar"
+        :disabled="confirmText !== 'ELIMINAR'"
+        @click="eliminarUsuario"
+      >
+        Eliminar
+      </v-btn>
+
+    </v-card-actions>
+
+  </v-card>
+</v-dialog>
+
 </template>
 
 <style scoped>
-/* Mismo estilo de tu registro */
+/* Parche CSS definitivo para Vuetify 3 que limpia el fondo inyectado por navegadores */
+:deep(.v-field input:-webkit-autofill),
+:deep(.v-field input:-webkit-autofill:hover), 
+:deep(.v-field input:-webkit-autofill:focus),
+:deep(.v-field input:-webkit-autofill:active) {
+  -webkit-box-shadow: 0 0 0px 1000px white inset !important;
+  -webkit-text-fill-color: #000000 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
 </style>

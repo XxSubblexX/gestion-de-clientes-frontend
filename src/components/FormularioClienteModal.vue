@@ -1,90 +1,100 @@
 <template>
-  <div class="modal-overlay">
-    <div class="modal-contenido">
-      <header>
-        <h2>Registrar Cliente</h2>
-      </header>
+  <v-dialog v-model="dialog" max-width="600">
+    <v-card class="pa-5" rounded="xl" elevation="10">
 
-      <main>
-        <form @submit.prevent="guardarCliente">
-          <!-- NIT -->
-          <div>
-            <label>NIT</label>
-            <input 
-              v-model="formulario.nit" 
-              type="text" 
-              required 
-              placeholder="Ej: 123456789-1"
-            />
-          </div>
+      <!-- HEADER -->
+      <v-card-title class="text-h5 font-weight-bold d-flex align-center">
+        <v-icon class="mr-2" color="primary">
+          mdi-account-plus
+        </v-icon>
+        Registrar Cliente
+      </v-card-title>
 
-          <!-- Razón Social -->
-          <div>
-            <label>Razón Social</label>
-            <input 
-              v-model="formulario.razon_social" 
-              type="text" 
-              required 
-              placeholder="Nombre de la empresa"
-            />
-          </div>
+      <v-divider class="my-3" />
 
-          <!-- Correo -->
-          <div>
-            <label>Correo Electrónico</label>
-            <input 
-              v-model="formulario.correo" 
-              type="email" 
-              required 
-              placeholder="correo@empresa.com"
-            />
-          </div>
+      <!-- FORM -->
+      <v-form @submit.prevent="guardarCliente">
 
-          <!-- Teléfono -->
-          <div>
-            <label>Teléfono</label>
-            <input 
-              v-model="formulario.telefono" 
-              type="text" 
-              required 
-              placeholder="Ej: 600 000 000"
-            />
-          </div>
+        <v-text-field
+          v-model="formulario.nit"
+          label="NIT"
+          placeholder="Ej: 123456789-1"
+          variant="outlined"
+          class="mb-3"
+          prepend-inner-icon="mdi-card-account-details"
+        />
 
-          <!-- Estado (Checkbox Booleano) -->
-          <div>
-            <input 
-              v-model="formulario.estado" 
-              id="estado" 
-              type="checkbox" 
-            />
-            <label for="estado">Cliente Activo</label>
-          </div>
+        <v-text-field
+          v-model="formulario.razon_social"
+          label="Razón Social"
+          placeholder="Nombre de la empresa"
+          variant="outlined"
+          class="mb-3"
+          prepend-inner-icon="mdi-domain"
+        />
 
-          <!-- Botón de Envío -->
-          <div>
-            <!-- Cambiado de RouterLink a un botón normal que emite el cierre -->
-            <button type="button" class="btn-cancelar" @click="$emit('cerrar')">Cancelar</button>
-            <button type="submit">Guardar Cliente</button>
-          </div>
-        </form>
-      </main>
-    </div>
-  </div>
+        <v-text-field
+          v-model="formulario.correo"
+          label="Correo Electrónico"
+          placeholder="correo@empresa.com"
+          type="email"
+          variant="outlined"
+          class="mb-3"
+          prepend-inner-icon="mdi-email"
+        />
+
+        <v-text-field
+          v-model="formulario.telefono"
+          label="Teléfono"
+          placeholder="Ej: 600 000 000"
+          variant="outlined"
+          class="mb-3"
+          prepend-inner-icon="mdi-phone"
+        />
+
+        <!-- BOTONES -->
+        <v-card-actions class="px-0">
+          <v-spacer />
+
+          <v-btn
+            variant="text"
+            color="grey"
+            @click="cerrarDialog"
+          >
+            Cancelar
+          </v-btn>
+
+          <v-btn
+            color="primary"
+            type="submit"
+            prepend-icon="mdi-content-save"
+          >
+            Guardar Cliente
+          </v-btn>
+
+        </v-card-actions>
+
+      </v-form>
+
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import axios from 'axios'
 
 const props = defineProps({
-  idUsuario: {
-    type: [Number, String],
-    required: true
-  }
+  modelValue: Boolean,
+  idUsuario: [Number, String]
 })
 
-const emit = defineEmits(['cerrar', 'clienteGuardado'])
+const emit = defineEmits(['update:modelValue', 'clienteGuardado'])
+
+const dialog = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val)
+})
 
 const formulario = ref({
   nit: '',
@@ -94,24 +104,32 @@ const formulario = ref({
   estado: true
 })
 
+const cerrarDialog = () => {
+  dialog.value = false
+}
+
 const guardarCliente = async () => {
   try {
     const token = localStorage.getItem("token")
-    const datosDelFormulario = formulario.value
-    const id_usuario = props.idUsuario
 
-    const respuesta = await axios.post(`http://localhost:3000/clientes`, {
-      ...datosDelFormulario,
-      id_usuario: id_usuario
-    }, {
-      headers: {
-        'token': `Bearer ${token}`
+    const payload = {
+      ...formulario.value,
+      id_usuario: props.idUsuario
+    }
+
+    const res = await axios.post(
+      'http://localhost:3000/clientes',
+      payload,
+      {
+        headers: { token: `Bearer ${token}` }
       }
-    });
+    )
 
-    console.log(respuesta)
-    alert('Cliente registrado con éxito')
-    
+    emit('clienteGuardado', {
+      id_cliente: res.data.id_cliente,
+      ...payload
+    })
+
     formulario.value = {
       nit: '',
       razon_social: '',
@@ -120,11 +138,11 @@ const guardarCliente = async () => {
       estado: true
     }
 
-    emit('clienteGuardado') // Avisa a la tabla que debe recargar los datos
-    emit('cerrar')          // Cierra la pantalla emergente
+    cerrarDialog()
+
   } catch (error) {
-    console.error("Error al insertar el cliente:", error)
-    alert('No se pudo registrar el cliente')
+    console.error(error)
+    alert('Error al registrar cliente')
   }
 }
 </script>
