@@ -5,9 +5,6 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-// =====================
-// 🔥 DATOS USUARIO (estado del formulario)
-// =====================
 const show1 = ref(false) // mostrar/ocultar contraseña
 const modelValue = ref(false) // controla apertura del dialog
 const id_usuario = ref(null) // id del usuario logueado
@@ -19,28 +16,24 @@ const password = ref("") // nueva contraseña (opcional)
 // 🔥 UI STATES (estado UI extra)
 // =====================
 const mostrarDialogEliminar = ref(false) // dialog de confirmación eliminar
-const confirmText = ref("") // texto de confirmación "ELIMINAR"
 const loadingEliminar = ref(false) // loading botón eliminar
 
 const props = defineProps(['nombre'])
 const emit = defineEmits(['actualizarNombre'])
+
 // =====================
 // ⚙️ ABRIR SETTINGS + CARGAR INFO USUARIO
 // =====================
 const activarSettings = async () => {
   try {
-    // obtener datos guardados en localStorage
     const info = JSON.parse(localStorage.getItem("info"))
     const token = localStorage.getItem("token")
 
-    // si no hay datos, salir
     if (!info || !token) return
 
-    // guardar id del usuario
     id_usuario.value = info.id
     nombre_edit.value = info.nombre
 
-    // petición al backend para traer datos reales del usuario
     const res = await axios.get(
       `http://localhost:3000/usuarios/${id_usuario.value}`,
       {
@@ -50,12 +43,10 @@ const activarSettings = async () => {
       }
     )
 
-    // asignar datos al formulario
     nombre_edit.value = res.data.nombre
     correo.value = res.data.correo || ""
-    password.value = "" // nunca precargar password
+    password.value = "" 
 
-    // abrir modal
     modelValue.value = true
 
   } catch (error) {
@@ -70,18 +61,15 @@ const actualizarDatos = async () => {
   try {
     const token = localStorage.getItem("token")
 
-    // objeto base que siempre se envía
     const data = {
       nombre: nombre_edit.value,
       correo: correo.value
     }
 
-    // solo enviar password si el usuario escribió algo
     if (password.value?.trim()) {
       data.password = password.value
     }
 
-    // petición PUT para actualizar usuario
     await axios.put(
       `http://localhost:3000/usuarios/${id_usuario.value}`,
       data,
@@ -97,7 +85,6 @@ const actualizarDatos = async () => {
     alert("Datos actualizados correctamente")
   } catch (error) {
     console.error(error)
-
     alert("No se pudieron guardar los cambios")
   }
 }
@@ -106,11 +93,8 @@ const actualizarDatos = async () => {
 // 🚪 CERRAR SESIÓN
 // =====================
 const cerrarSesion = () => {
-  // borrar sesión
   localStorage.removeItem("token")
   localStorage.removeItem("info")
-
-  // redirigir a login
   router.push({ name: "inicioSesion" })
 }
 
@@ -120,10 +104,8 @@ const cerrarSesion = () => {
 const eliminarUsuario = async () => {
   try {
     loadingEliminar.value = true
-
     const token = localStorage.getItem("token")
 
-    // petición DELETE usuario
     await axios.delete(
       `http://localhost:3000/usuarios/${id_usuario.value}`,
       {
@@ -133,11 +115,8 @@ const eliminarUsuario = async () => {
       }
     )
 
-    // limpiar sesión después de eliminar cuenta
     localStorage.removeItem("token")
     localStorage.removeItem("info")
-
-    // ir a login
     router.push({ name: "inicioSesion" })
 
   } catch (error) {
@@ -158,17 +137,14 @@ const eliminarUsuario = async () => {
 
     <!-- MODAL DE EDICIÓN DE USUARIO -->
     <v-dialog :model-value="modelValue" max-width="600" persistent>
-
       <v-card width="600" class="pa-6" rounded="xl" elevation="10">
 
         <!-- HEADER DEL MODAL -->
         <div class="d-flex justify-space-between">
           <v-card-title class="text-h5 font-weight-bold">
             Modificar Cuenta
-            {{ modelValue }} <!-- debug: muestra estado del modal -->
           </v-card-title>
 
-          <!-- botón cerrar modal -->
           <v-btn 
             icon="mdi-close" 
             variant="text" 
@@ -247,45 +223,39 @@ const eliminarUsuario = async () => {
     </v-dialog>
 
     <!-- MODAL CONFIRMAR ELIMINAR -->
-    <v-dialog v-model="mostrarDialogEliminar" max-width="450">
+    <v-dialog v-model="mostrarDialogEliminar" max-width="450" persistent>
+      <v-card rounded="xl" class="pa-6 text-center">
+        
+        <v-icon color="error" size="64" class="mb-4">mdi-alert-octagon</v-icon>
 
-      <v-card rounded="xl" class="pa-4">
-
-        <v-card-title class="text-red font-weight-bold">
-          Eliminar cuenta
+        <v-card-title class="text-h5 text-red font-weight-bold justify-center pt-0">
+          ¿Está seguro?
         </v-card-title>
 
-        <v-card-text>
-          <p class="mb-3">
-            Escribe <b>ELIMINAR</b> para confirmar
-          </p>
-
-          <!-- input confirmación -->
-          <v-text-field
-            v-model="confirmText"
-            label="ELIMINAR"
-            variant="outlined"
-          />
+        <v-card-text class="text-body-1 text-grey-darken-2 pt-2">
+          Esta acción es <strong>permanente</strong>. Perderá el acceso a su cuenta y todos sus datos quedarán inaccesibles.
         </v-card-text>
 
-        <v-card-actions>
-          <v-spacer />
-
-          <!-- cancelar -->
-          <v-btn variant="text" @click="mostrarDialogEliminar = false">
+        <v-card-actions class="justify-center gap-2 mt-4">
+          <v-btn 
+            variant="outlined" 
+            color="grey-darken-1"
+            class="px-6"
+            :disabled="loadingEliminar"
+            @click="mostrarDialogEliminar = false"
+          >
             Cancelar
           </v-btn>
 
-          <!-- confirmar eliminar -->
           <v-btn
             color="error"
+            variant="flat"
+            class="px-6"
             :loading="loadingEliminar"
-            :disabled="confirmText !== 'ELIMINAR'"
             @click="eliminarUsuario"
           >
-            Eliminar
+            Sí, eliminar cuenta
           </v-btn>
-
         </v-card-actions>
 
       </v-card>
@@ -295,7 +265,6 @@ const eliminarUsuario = async () => {
 </template>
 
 <style scoped>
-/* fix visual de autofill en inputs */
 :deep(.v-field input:-webkit-autofill),
 :deep(.v-field input:-webkit-autofill:hover), 
 :deep(.v-field input:-webkit-autofill:focus),

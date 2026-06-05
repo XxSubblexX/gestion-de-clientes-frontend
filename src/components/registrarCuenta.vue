@@ -3,11 +3,9 @@ import { ref } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router'; 
 
+const nombre = ref("");
 const correo = ref("");
 const password = ref("");
-const token = ref("");
-const info = ref("");
-const rol = ref(null);
 const router = useRouter(); 
 
 // Controladores visuales de Vuetify
@@ -17,35 +15,18 @@ const mostrarPassword = ref(false);
 const guardarToken = async () =>  {
   cargando.value = true;
   try {
-    const respuesta = await axios.post("http://localhost:3000/login", {
+    await axios.post("http://localhost:3000/usuarios", {
+      nombre: nombre.value,
       correo: correo.value,
       password: password.value
     });
 
-    info.value = respuesta.data.payload;
-    token.value = respuesta.data.token;
-    
-    localStorage.setItem('token', respuesta.data.token);
-    localStorage.setItem('info', JSON.stringify(respuesta.data.payload));
-
-    console.log(info)
-
-
-    rol.value = info.value.rol
-
-    if (rol.value === 1) {
-      router.push({ name: 'usuariosCRUD'}); 
-    }
-    else if (rol.value === 2) {
-      router.push({ name: 'clientesCRUD'});
-    }
-    else {
-      alert("usted no tiene un rol definido.")
-    }
+    // Te redirige exitosamente a la pantalla de login
+    router.push({ name: 'inicioSesion'}); 
 
   } catch (error) {
-    console.error("Error al iniciar sesión", error);
-    alert("Credenciales incorrectas");
+    console.error("Error al registrar usuario", error);
+    alert("No se pudo crear la cuenta. Intenta de nuevo.");
   } finally {
     cargando.value = false;
   }
@@ -53,27 +34,40 @@ const guardarToken = async () =>  {
 </script>
 
 <template>
-  <!-- Contenedor centrado en pantalla completa con utilidades de Vuetify -->
+  <!-- Contenedor centrado en pantalla completa con fondo gris claro -->
   <v-container fluid class="fill-height bg-grey-lighten-4 d-flex align-center justify-center">
+    <v-dialog>
+      
     
     <v-card width="100%" max-width="450" class="pa-6" rounded="xl" elevation="12">
       
       <!-- Encabezado / Título -->
       <v-card-item class="text-center mb-4">
         <v-avatar color="primary" size="56" class="mb-2">
-          <v-icon size="28" color="white">mdi-lock-outline</v-icon>
+          <v-icon size="28" color="white">mdi-account-plus-outline</v-icon>
         </v-avatar>
         <v-card-title class="text-h5 font-weight-bold">
-          Iniciar Sesión
+          Crear Cuenta
         </v-card-title>
         <v-card-subtitle>
-          Ingresa tus credenciales para continuar
+          Regístrate para empezar a gestionar tus clientes
         </v-card-subtitle>
       </v-card-item>
 
       <!-- Formulario -->
       <v-form @submit.prevent="guardarToken">
         
+        <!-- Campo Nombre -->
+        <v-text-field
+          v-model="nombre"
+          label="Nombre Completo"
+          type="text"
+          variant="outlined"
+          prepend-inner-icon="mdi-account-outline"
+          class="mb-2"
+          required
+        />
+
         <!-- Campo Correo -->
         <v-text-field
           v-model="correo"
@@ -85,7 +79,7 @@ const guardarToken = async () =>  {
           required
         />
 
-        <!-- Campo Contraseña con opción de ocultar/mostrar ojo -->
+        <!-- Campo Contraseña con opción de ocultar/mostrar -->
         <v-text-field
           v-model="password"
           label="Contraseña"
@@ -98,7 +92,7 @@ const guardarToken = async () =>  {
           required
         />
 
-        <!-- Botón de Envío Animado y con estado de carga -->
+        <!-- Botón de Envío Estilizado -->
         <v-btn
           type="submit"
           color="primary"
@@ -108,22 +102,27 @@ const guardarToken = async () =>  {
           class="text-weight-bold mb-4"
           :loading="cargando"
         >
-          Ingresar
+          Registrarse
         </v-btn>
       </v-form>
 
       <v-divider class="my-4" />
 
-      <!-- Enlace de Registro estilizado -->
+      <!-- Enlace para regresar al Login si ya tiene cuenta -->
       <div class="text-center">
         <router-link 
-          :to="{ name: 'registrarCuenta' }" 
+          :to="{ name: 'inicioSesion' }" 
           class="text-decoration-none text-primary font-weight-medium text-body-2"
         >
-          ¿No tienes cuenta? Regístrate aquí
+          ¿Ya tienes una cuenta? Inicia sesión aquí
         </router-link>
       </div>
 
     </v-card>
+    </v-dialog>
   </v-container>
 </template>
+
+<style scoped>
+/* Vuetify maneja todo el diseño responsivo de forma nativa */
+</style>

@@ -10,7 +10,7 @@ import userSettings from '@/components/userSettings.vue';
 
 const id_usuario = ref(null)
 const nombre = ref('')
-const clientes = ref([])
+const usuarios = ref([])
 const router = useRouter()
 const busqueda = ref('') 
 
@@ -28,12 +28,11 @@ const manejarNotificacion = (alerta) => {
 }
 
 const cabeceras = ref([
-  { title: 'NIT', key: 'nit', align: 'center', sortable: true },
-  { title: 'Razón Social', key: 'razon_social', align: 'start', sortable: true },
-  { title: 'Correo', key: 'correo', align: 'start' },
-  { title: 'Teléfono', key: 'telefono', align: 'center' },
-  { title: 'Estado', key: 'estado', align: 'center' }, 
-  { title: 'Acciones', key: 'acciones', align: 'center', sortable: false }
+    { title: 'Nombre', key: 'nombre', align: 'center', sortable: true },
+    { title: 'Correo', key: 'correo', align: 'start', sortable: true },
+    { title: 'Rol', key: 'id_rol', align: 'start' },
+    { title: 'Estado', key: 'estado', align: 'center' }, 
+    { title: 'Acciones', key: 'acciones', align: 'center', sortable: false }
 ])
 
 const mostrarAjustesDeUsuario = ref(false)
@@ -48,12 +47,12 @@ const actualizarFila = (esInformacionQueMeLlego) => {
   manejarNotificacion({ texto: "Cliente registrado correctamente", color: "success" })
 }
 
-const cargarClientes = async () => {
+const cargarUsuarios = async () => {
   try {
-    const respuesta = await axios.get(`http://localhost:3000/clientes`, {
+    const respuesta = await axios.get(`http://localhost:3000/usuarios`, {
       headers: { token: `Bearer ${localStorage.getItem("token")}` }
     })
-    clientes.value = respuesta.data
+    usuarios.value = respuesta.data
   } catch (error) {
     console.error("Error al cargar clientes:", error)
     if (error.response?.status === 401) {
@@ -93,7 +92,7 @@ onMounted(async () => {
   } catch (e) {
     console.error(e)
   }
-  await cargarClientes()
+  await cargarUsuarios()
 })
 </script>
 
@@ -136,7 +135,7 @@ onMounted(async () => {
       <!-- Tabla Cabecera con Buscador -->
       <v-card-title class="pa-4 bg-grey-lighten-4 d-flex flex-sm-row flex-column align-sm-center justify-space-between gap-4">
         <div class="text-subtitle-1 font-weight-bold text-grey-darken-2">
-          Lista de Clientes Registrados ({{ clientes.length }})
+          Lista de usuarios Registrados ({{ usuarios.length }})
         </div>
         <v-text-field
           v-model="busqueda"
@@ -154,10 +153,10 @@ onMounted(async () => {
 
       <!-- DATA TABLE -->
       <v-data-table
-        :items="clientes"
+        :items="usuarios"
         :headers="cabeceras"
         :search="busqueda"
-        item-value="id_cliente"
+        item-value="id_usuario"
         items-per-page="10"
         hover
         class="elevation-0 text-grey-darken-2"

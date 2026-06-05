@@ -1,5 +1,15 @@
 <template>
-  <v-dialog v-model="dialog" max-width="600">
+   <v-btn 
+            color="primary" 
+            prepend-icon="mdi-plus" 
+            size="large"
+            rounded="lg"
+            elevation="2"
+            @click="abrirModalNuevo"
+          >
+            Registrar Cliente
+          </v-btn>
+  <v-dialog v-model="modelValue" max-width="600">
     <v-card class="pa-5" rounded="xl" elevation="10">
 
       <!-- HEADER -->
@@ -11,7 +21,7 @@
       </v-card-title>
 
       <v-divider class="my-3" />
-
+    
       <!-- FORM -->
       <v-form @submit.prevent="guardarCliente">
 
@@ -81,22 +91,20 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import axios from 'axios'
 
-const props = defineProps({
-  modelValue: Boolean,
-  idUsuario: [Number, String]
-})
+// Eliminamos computed porque no lo estabas usando
+const emit = defineEmits(['clienteGuardado'])
 
-const emit = defineEmits(['update:modelValue', 'clienteGuardado'])
+const modelValue = ref(false)
 
-const dialog = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
-})
+const abrirModalNuevo = () => {
+  modelValue.value = true
+}
 
-const formulario = ref({
+// Estado inicial limpio para reutilizar fácilmente
+const estadoInicialFormulario = () => ({
   nit: '',
   razon_social: '',
   correo: '',
@@ -104,40 +112,40 @@ const formulario = ref({
   estado: true
 })
 
+const formulario = ref(estadoInicialFormulario())
+
 const cerrarDialog = () => {
-  dialog.value = false
+  modelValue.value = false
 }
 
 const guardarCliente = async () => {
   try {
-    const token = localStorage.getItem("token")
+    // CORRECCIÓN: Obtener el string y parsearlo a objeto de forma segura
+    const infoLocalStorage = localStorage.getItem("info")
+    if (!infoLocalStorage) {
+      alert('No se encontró información de la sesión del usuario')
+      return
+    } 
 
     const payload = {
       ...formulario.value,
-      id_usuario: props.idUsuario
     }
 
     const res = await axios.post(
       'http://localhost:3000/clientes',
       payload,
       {
-        headers: { token: `Bearer ${token}` }
+        headers: {token: `Bearer ${localStorage.getItem("token")}` } 
       }
     )
 
     emit('clienteGuardado', {
-      id_cliente: res.data.id_cliente,
+      id_cliente: res.data[0].id_cliente,
       ...payload
     })
 
-    formulario.value = {
-      nit: '',
-      razon_social: '',
-      correo: '',
-      telefono: '',
-      estado: true
-    }
-
+    // Limpieza de formulario usando la función constructora
+    formulario.value = estadoInicialFormulario()
     cerrarDialog()
 
   } catch (error) {

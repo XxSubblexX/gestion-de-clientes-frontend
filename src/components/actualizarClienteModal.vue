@@ -1,16 +1,12 @@
 <template>
                 <v-btn
-                  icon="mdi-pencil"
-                  size="small"
-                  color="primary"
-                  @click="cargarDialog()"
-                />  
-                <v-btn
-                  icon="mdi-trash-can-outline"
-                  color="error"
-                  title="Eliminar"
-                  @click="ejecutarEliminacion"
-                />
+    icon="mdi-pencil"
+    variant="text"
+    color="primary"
+    class="btn-animado mr-1"
+    @click="cargarDialog()"
+  />  
+  
   <v-dialog v-model="modelValue" max-width="600">
     <v-card class="pa-5" rounded="xl" elevation="10">
 
@@ -72,7 +68,7 @@
         <v-card-actions class="px-0">
           <v-spacer />
 
-          <v-btn variant="text" color="grey" @click="">
+          <v-btn variant="text" color="grey" @click="cerrar()">
             Cancelar
           </v-btn>
 
@@ -95,12 +91,7 @@ import axios from 'axios'
 const props = defineProps(['cliente'])
 
 
-const emit = defineEmits(['clienteActualizado', 'eliminado'])
-
-// v-model dialog (igual que el otro modal)
-
-
-// campos
+const emit = defineEmits(['clienteActualizado'])
 
 const nit = ref('')
 const razonSocial = ref('')
@@ -130,7 +121,6 @@ const cerrar = () => {
 // actualizar
 const actualizarCliente = async () => {
   try {
-    const token = localStorage.getItem("token")
 
     const datos = {
       nit: nit.value,
@@ -144,7 +134,7 @@ const actualizarCliente = async () => {
       `http://localhost:3000/clientes/${props.cliente.id_cliente}`,
       datos,
       {
-        headers: { token: `Bearer ${token}` }
+        headers: { token: `Bearer ${localStorage.getItem("token")}` }
       }
     )
 
@@ -157,30 +147,6 @@ const actualizarCliente = async () => {
   } catch (error) {
     console.error(error)
     alert("Error al actualizar cliente")
-  }
-}
-
-const ejecutarEliminacion = async () => {
-  const confirmar = confirm(`¿Estás seguro de que deseas eliminar al cliente "${props.cliente.razon_social}"?`)
-  if (!confirmar) return 
-
-  try {
-    const token = localStorage.getItem("token")
-    
-    // Petición DELETE a tu backend
-    await axios.delete(`http://localhost:3000/clientes/${props.cliente.id_cliente}`, {
-      headers: {
-        'token': `Bearer ${token}`
-      }
-    })
-
-    alert("Cliente eliminado con éxito.")
-    
-    // Emitimos el evento hacia el padre enviando el ID del cliente borrado
-    emit('eliminado', props.cliente.id_cliente)
-  } catch (error) {
-    console.error("Error al eliminar el cliente:", error)
-    alert("No se pudo eliminar el cliente. Inténtalo de nuevo.")
   }
 }
 </script>
