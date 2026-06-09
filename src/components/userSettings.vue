@@ -11,6 +11,7 @@ const id_usuario = ref(null) // id del usuario logueado
 const nombre_edit = ref("") // nombre editable
 const correo = ref("") // correo editable
 const password = ref("") // nueva contraseña (opcional)
+const estado = ref("")
 
 // =====================
 // 🔥 UI STATES (estado UI extra)
@@ -33,6 +34,7 @@ const activarSettings = async () => {
 
     id_usuario.value = info.id
     nombre_edit.value = info.nombre
+    estado.value = info.estado
 
     const res = await axios.get(
       `http://localhost:3000/usuarios/${id_usuario.value}`,
@@ -63,7 +65,8 @@ const actualizarDatos = async () => {
 
     const data = {
       nombre: nombre_edit.value,
-      correo: correo.value
+      correo: correo.value,
+      estado: estado.value 
     }
 
     if (password.value?.trim()) {

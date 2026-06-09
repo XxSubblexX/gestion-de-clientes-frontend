@@ -56,14 +56,6 @@
           prepend-inner-icon="mdi-phone"
         />
 
-        <v-switch
-          v-model="estado"
-          label="Cliente Activo"
-          color="primary"
-          inset
-          class="mb-4"
-        />
-
         <!-- BOTONES -->
         <v-card-actions class="px-0">
           <v-spacer />
@@ -88,7 +80,7 @@
 import { ref } from 'vue'
 import axios from 'axios'
 
-const props = defineProps(['cliente'])
+const props = defineProps(['usuario'])
 
 
 const emit = defineEmits(['clienteActualizado'])

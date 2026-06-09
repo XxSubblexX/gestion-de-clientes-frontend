@@ -75,7 +75,8 @@
           </v-btn>
 
           <v-btn
-            color="primary"
+            color="white"
+            class="bg-primary"
             type="submit"
             prepend-icon="mdi-content-save"
           >

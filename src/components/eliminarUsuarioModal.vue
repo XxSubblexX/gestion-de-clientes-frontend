@@ -26,8 +26,8 @@
       </v-card-item>
 
       <v-card-text class="text-body-1 text-grey-darken-2 py-4">
-        Estás a punto de eliminar al cliente 
-        <strong class="text-grey-darken-4">"{{ props.cliente?.razon_social }}"</strong>. 
+        Estás a punto de eliminar al usuario 
+        <strong class="text-grey-darken-4">"{{ props.usuario?.nombre }}"</strong>. 
         Esta acción no se puede deshacer.
       </v-card-text>
 
@@ -62,7 +62,7 @@
 import { ref } from 'vue'
 import axios from 'axios'
 
-const props = defineProps(['cliente', 'usuario'])
+const props = defineProps(['usuario'])
 const emit = defineEmits(['eliminado', 'notificar']) // Agregamos 'notificar'
 
 const modelValue = ref(false)
@@ -79,10 +79,9 @@ const cerrar = () => {
 const ejecutarEliminacion = async () => {
   try {
     cargando.value = true
-    console.log(props.cliente)
-    await axios.patch(
-  `http://localhost:3000/clientes/${props.cliente.id_cliente}`,
-    { estado: false },
+    console.log(props.usuario)
+    await axios.delete(
+  `http://localhost:3000/usuarios/${props.usuario.id_usuario}`,
   {
     headers: {
       token: `Bearer ${localStorage.getItem("token")}`
@@ -91,13 +90,13 @@ const ejecutarEliminacion = async () => {
 )
 
     // Mandamos el mensaje de éxito al padre antes de cerrar
-    emit('eliminado', props.cliente.id_cliente)
+    emit('eliminado', props.usuario.id_usuario)
     
     cerrar()
   } catch (error) {
-    console.error("Error al eliminar el cliente:", error)
+    console.error("Error al eliminar el usuario:", error)
     // Mandamos el mensaje de error al padre para evitar usar alert()
-    emit('notificar', { texto: "No se pudo eliminar el cliente. Inténtalo de nuevo.", color: "error" })
+    emit('notificar', { texto: "No se pudo eliminar el usuario. Inténtalo de nuevo.", color: "error" })
   } finally {
     cargando.value = false
   }

@@ -28,8 +28,6 @@ const guardarToken = async () =>  {
     localStorage.setItem('token', respuesta.data.token);
     localStorage.setItem('info', JSON.stringify(respuesta.data.payload));
 
-    console.log(info)
-
 
     rol.value = info.value.rol
 
@@ -112,17 +110,6 @@ const guardarToken = async () =>  {
         </v-btn>
       </v-form>
 
-      <v-divider class="my-4" />
-
-      <!-- Enlace de Registro estilizado -->
-      <div class="text-center">
-        <router-link 
-          :to="{ name: 'registrarCuenta' }" 
-          class="text-decoration-none text-primary font-weight-medium text-body-2"
-        >
-          ¿No tienes cuenta? Regístrate aquí
-        </router-link>
-      </div>
 
     </v-card>
   </v-container>

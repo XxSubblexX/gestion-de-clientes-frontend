@@ -31,8 +31,7 @@ const cabeceras = ref([
   { title: 'NIT', key: 'nit', align: 'center', sortable: true },
   { title: 'Razón Social', key: 'razon_social', align: 'start', sortable: true },
   { title: 'Correo', key: 'correo', align: 'start' },
-  { title: 'Teléfono', key: 'telefono', align: 'center' },
-  { title: 'Estado', key: 'estado', align: 'center' }, 
+  { title: 'Teléfono', key: 'telefono', align: 'center' }, 
   { title: 'Acciones', key: 'acciones', align: 'center', sortable: false }
 ])
 
@@ -54,6 +53,8 @@ const cargarClientes = async () => {
       headers: { token: `Bearer ${localStorage.getItem("token")}` }
     })
     clientes.value = respuesta.data
+    const clientesActivos = clientes.value.filter(u => u.estado === true)
+    clientes.value = clientesActivos
   } catch (error) {
     console.error("Error al cargar clientes:", error)
     if (error.response?.status === 401) {
@@ -163,16 +164,6 @@ onMounted(async () => {
         class="elevation-0 text-grey-darken-2"
         no-data-text="No se encontraron clientes registrados"
       >
-        <!-- Estilo Personalizado para el Estado -->
-        <template #item.estado="{ item }">
-          <v-chip
-            :color="item.estado ? 'success' : 'error'"
-            :text="item.estado ? 'Activo' : 'Inactivo'"
-            size="small"
-            variant="flat"
-            class="font-weight-medium px-3"
-          />
-        </template>
 
         <!-- Acciones del Cliente -->
         <template #item.acciones="{ item }">

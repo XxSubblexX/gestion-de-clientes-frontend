@@ -3,9 +3,9 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 
-import FormularioClienteModal from '/src/components/FormularioClienteModal.vue';
-import ActualizarClienteModal from '/src/components/actualizarClienteModal.vue';
-import BorrarClienteModal from '/src/components/eliminarClienteModal.vue';
+import FormularioUsuarioModal from '/src/components/registrarCuenta.vue';
+import ActualizarUsuarioModal from '/src/components/actualizarUsuarioModal.vue';
+import BorrarUsuarioModal from '/src/components/eliminarUsuarioModal.vue';
 import userSettings from '@/components/userSettings.vue';
 
 const id_usuario = ref(null)
@@ -14,9 +14,6 @@ const usuarios = ref([])
 const router = useRouter()
 const busqueda = ref('') 
 
-// =====================
-// 🔥 ESTADOS PARA ALERTAS (SNACKBAR)
-// =====================
 const snackbar = ref(false)
 const snackbarTexto = ref("")
 const snackbarColor = ref("success")
@@ -28,11 +25,11 @@ const manejarNotificacion = (alerta) => {
 }
 
 const cabeceras = ref([
+    { title: 'Acciones', key: 'acciones', align: 'center', sortable: false },
     { title: 'Nombre', key: 'nombre', align: 'center', sortable: true },
     { title: 'Correo', key: 'correo', align: 'start', sortable: true },
     { title: 'Rol', key: 'id_rol', align: 'start' },
-    { title: 'Estado', key: 'estado', align: 'center' }, 
-    { title: 'Acciones', key: 'acciones', align: 'center', sortable: false }
+    { title: 'Estado', key: 'estado', align: 'center' } 
 ])
 
 const mostrarAjustesDeUsuario = ref(false)
@@ -42,9 +39,9 @@ const nombreActualizado = (nuevoNombre) => {
 }
 
 const actualizarFila = (esInformacionQueMeLlego) => {
-  clientes.value.unshift(esInformacionQueMeLlego)
-  // Alerta opcional al crear cliente
-  manejarNotificacion({ texto: "Cliente registrado correctamente", color: "success" })
+  usuarios.value.unshift(esInformacionQueMeLlego)
+  // Alerta opcional al crear usuario
+  manejarNotificacion({ texto: "Usuario registrado correctamente", color: "success" })
 }
 
 const cargarUsuarios = async () => {
@@ -54,29 +51,30 @@ const cargarUsuarios = async () => {
     })
     usuarios.value = respuesta.data
   } catch (error) {
-    console.error("Error al cargar clientes:", error)
+    console.error("Error al cargar usuarios:", error)
     if (error.response?.status === 401) {
       router.push({ name: 'inicioSesion' })
     }
   }
 }
 
-const actualizarClienteEnLaLista = (cliente_actualizado) => {
-  const index = clientes.value.findIndex(
-    c => c.id_cliente === cliente_actualizado.id_cliente
+const actualizarUsuarioEnLaLista = (usuario_actualizado) => {
+  const index = usuarios.value.findIndex(
+    u => u.id_usuario === usuario_actualizado.id_usuario
   )
   
   if (index !== -1) {
-    clientes.value[index] = cliente_actualizado
-    manejarNotificacion({ texto: "Cliente actualizado correctamente", color: "info" })
+    usuarios.value.splice(index, 1, usuario_actualizado)
+    manejarNotificacion({ texto: "Usuario actualizado correctamente", color: "info" })
   }
 }
 
-const removerClienteDeLaLista = (id) => {
-  clientes.value = clientes.value.filter(
-    c => c.id_cliente !== id
+const removerUsuarioDeLaLista = (id) => {
+  console.log(id)
+  usuarios.value = usuarios.value.filter(
+    c => c.id_usuario !== id
   )
-  manejarNotificacion({ texto: "Cliente eliminado correctamente", color: "error" })
+  manejarNotificacion({ texto: "Usuario eliminado correctamente", color: "error" })
 }
 
 onMounted(async () => {
@@ -107,7 +105,7 @@ onMounted(async () => {
           </v-avatar>
           <div>
             <h2 class="text-h5 font-weight-bold text-grey-darken-3 mb-1">
-              Gestión de Clientes
+              Gestión de Usuarios
             </h2>
             <div class="d-flex align-center text-subtitle-2 text-medium-emphasis">
               <v-icon size="16" class="mr-1" color="grey">mdi-account-circle-outline</v-icon>
@@ -124,7 +122,7 @@ onMounted(async () => {
         </v-col>
 
         <v-col cols="12" sm="4" class="d-flex justify-sm-end justify-start">
-            <FormularioClienteModal @clienteGuardado="actualizarFila" />
+            <FormularioUsuarioModal @usuarioGuardado="actualizarFila" />
         </v-col>
       </v-row>
     </v-card>
@@ -135,12 +133,12 @@ onMounted(async () => {
       <!-- Tabla Cabecera con Buscador -->
       <v-card-title class="pa-4 bg-grey-lighten-4 d-flex flex-sm-row flex-column align-sm-center justify-space-between gap-4">
         <div class="text-subtitle-1 font-weight-bold text-grey-darken-2">
-          Lista de usuarios Registrados ({{ usuarios.length }})
+          Lista de Usuarios Registrados ({{ usuarios.length }})
         </div>
         <v-text-field
           v-model="busqueda"
           prepend-inner-icon="mdi-magnify"
-          label="Buscar cliente..."
+          label="Buscar usuario..."
           variant="solo"
           density="compact"
           max-width="300"
@@ -160,7 +158,7 @@ onMounted(async () => {
         items-per-page="10"
         hover
         class="elevation-0 text-grey-darken-2"
-        no-data-text="No se encontraron clientes registrados"
+        no-data-text="No se encontraron usuarios registrados"
       >
         <!-- Estilo Personalizado para el Estado -->
         <template #item.estado="{ item }">
@@ -173,18 +171,17 @@ onMounted(async () => {
           />
         </template>
 
-        <!-- Acciones del Cliente -->
+        <!-- Acciones del Usuario -->
         <template #item.acciones="{ item }">
           <div class="d-flex justify-center align-center">
-            <ActualizarClienteModal
-              :cliente="item"
-              @clienteActualizado="actualizarClienteEnLaLista"
+            <ActualizarUsuarioModal
+              :usuario="item"
+              @usuarioActualizado="actualizarUsuarioEnLaLista"
             />
             
-            <!-- CAPTURAMOS EL EVENTO @notificar DEL HIJO -->
-            <BorrarClienteModal
-              :cliente="item"
-              @eliminado="removerClienteDeLaLista" 
+            <BorrarUsuarioModal
+              :usuario="item"
+              @eliminado="removerUsuarioDeLaLista" 
               @notificar="manejarNotificacion"
             />
           </div>

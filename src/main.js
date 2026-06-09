@@ -10,7 +10,6 @@ import '@mdi/font/css/materialdesignicons.css'
 // 2. Vistas del Router
 import InicioSesion from './views/inicioSesion.vue'
 import ClientesCRUD from './views/clientesCRUD.vue'
-import RegistrarCuenta from './components/registrarCuenta.vue/index.js'
 
 // Mantén tu importación original si el archivo está ahí arriba
 import App from '../App.vue' 
@@ -22,7 +21,6 @@ const router = createRouter({
   routes: [
     { path: '/login', name: 'inicioSesion', component: InicioSesion },
     { path: '/clientes', name: 'clientesCRUD', component: ClientesCRUD },
-    { path: '/register', name: 'registrarCuenta', component: RegistrarCuenta},
     { path: '/usuarios', name: 'usuariosCRUD', component: UsuariosCRUD}
   ]
 })
