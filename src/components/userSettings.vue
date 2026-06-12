@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 
@@ -12,6 +12,8 @@ const nombre_edit = ref("") // nombre editable
 const correo = ref("") // correo editable
 const password = ref("") // nueva contraseña (opcional)
 const estado = ref("")
+const cargando = ref(false) // estado de carga para el botón guardar
+const formRef = ref(null) // referencia del formulario
 
 // =====================
 // 🔥 UI STATES (estado UI extra)
@@ -20,32 +22,57 @@ const mostrarDialogEliminar = ref(false) // dialog de confirmación eliminar
 const loadingEliminar = ref(false) // loading botón eliminar
 
 const props = defineProps(['nombre'])
-const emit = defineEmits(['actualizarNombre'])
+const emit = defineEmits(['actualizarNombre', 'notificar', 'cerrar'])
+
+// Reglas de validación y seguridad
+const reglas = {
+  nombre: [
+    v => !!v || 'El nombre es obligatorio',
+    v => (v && v.trim().length >= 3) || 'Debe tener al menos 3 caracteres',
+    v => !/[<>;"'=$%]/.test(v) || 'No se permiten caracteres especiales peligrosos'
+  ],
+  correo: [
+    v => !!v || 'El correo electrónico es obligatorio',
+    v => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(v) || 'El formato de correo no es válido'
+  ],
+  password: [
+    v => !v || v.length >= 6 || 'La nueva contraseña debe tener al menos 6 caracteres',
+    v => !v || !/[<>;"]/.test(v) || 'No se permiten caracteres especiales peligrosos'
+  ]
+}
 
 // =====================
 // ⚙️ ABRIR SETTINGS + CARGAR INFO USUARIO
 // =====================
 const activarSettings = async () => {
+  if (formRef.value) {
+    formRef.value.resetValidation() // Limpia alertas rojas anteriores
+  }
+
   try {
     const info = JSON.parse(localStorage.getItem("info"))
     const token = localStorage.getItem("token")
 
-    if (!info || !token) return
+    if (!info || !token) {
+      emit('notificar', { texto: 'Sesión no válida', color: 'error' })
+      return
+    }
 
     id_usuario.value = info.id
     nombre_edit.value = info.nombre
     estado.value = info.estado
 
+    // Corregido: Cabecera unificada a 'token' para mantener consistencia con tu backend
     const res = await axios.get(
       `http://localhost:3000/usuarios/${id_usuario.value}`,
       {
         headers: {
-          Authorization: `Bearer ${token}`
+          token: `Bearer ${token}`
         }
       }
     )
 
-    nombre_edit.value = res.data.nombre
+    nombre_edit.value = res.data.nombre || ""
     correo.value = res.data.correo || ""
     password.value = "" 
 
@@ -53,6 +80,7 @@ const activarSettings = async () => {
 
   } catch (error) {
     console.error(error)
+    emit('notificar', { texto: 'Error al obtener datos de la cuenta', color: 'error' })
   }
 }
 
@@ -60,12 +88,19 @@ const activarSettings = async () => {
 // 💾 ACTUALIZAR USUARIO
 // =====================
 const actualizarDatos = async () => {
+  if (!formRef.value) return
+
+  // Validar visualmente el formulario antes de la petición HTTP
+  const { valid } = await formRef.value.validate()
+  if (!valid) return
+
+  cargando.value = true
   try {
     const token = localStorage.getItem("token")
 
     const data = {
-      nombre: nombre_edit.value,
-      correo: correo.value,
+      nombre: nombre_edit.value.trim(),
+      correo: correo.value.trim().toLowerCase(),
       estado: estado.value 
     }
 
@@ -73,22 +108,31 @@ const actualizarDatos = async () => {
       data.password = password.value
     }
 
+    // Corregido: Cabecera cambiada a 'token' para que coincida con tus otras rutas
     await axios.put(
       `http://localhost:3000/usuarios/${id_usuario.value}`,
       data,
       {
         headers: {
-          Authorization: `Bearer ${token}`
+          token: `Bearer ${token}`
         }
       }
     )
+
+    // Actualizar datos locales en el localStorage para evitar desincronización
+    const info = JSON.parse(localStorage.getItem("info")) || {}
+    info.nombre = nombre_edit.value.trim()
+    localStorage.setItem("info", JSON.stringify(info))
+
     password.value = ""
-    emit('actualizarNombre', nombre_edit.value)
+    emit('actualizarNombre', nombre_edit.value.trim())
     modelValue.value = false
-    alert("Datos actualizados correctamente")
+    emit('notificar', { texto: 'Tus datos se actualizaron correctamente', color: 'success' })
   } catch (error) {
     console.error(error)
-    alert("No se pudieron guardar los cambios")
+    emit('notificar', { texto: 'No se pudieron guardar los cambios', color: 'error' })
+  } finally {
+    cargando.value = false
   }
 }
 
@@ -98,6 +142,7 @@ const actualizarDatos = async () => {
 const cerrarSesion = () => {
   localStorage.removeItem("token")
   localStorage.removeItem("info")
+  emit('cerrar')
   router.push({ name: "inicioSesion" })
 }
 
@@ -109,22 +154,25 @@ const eliminarUsuario = async () => {
     loadingEliminar.value = true
     const token = localStorage.getItem("token")
 
+    // Corregido: Cabecera cambiada a 'token'
     await axios.delete(
       `http://localhost:3000/usuarios/${id_usuario.value}`,
       {
         headers: {
-          Authorization: `Bearer ${token}`
+          token: `Bearer ${token}`
         }
       }
     )
 
     localStorage.removeItem("token")
     localStorage.removeItem("info")
+    mostrarDialogEliminar.value = false
+    modelValue.value = false
     router.push({ name: "inicioSesion" })
 
   } catch (error) {
     console.error(error)
-    alert("No se pudo eliminar la cuenta")
+    emit('notificar', { texto: 'No se pudo eliminar la cuenta', color: 'error' })
   } finally {
     loadingEliminar.value = false
   }
@@ -134,17 +182,17 @@ const eliminarUsuario = async () => {
 <template>
   <div>
     <!-- nombre clickeable para abrir settings -->
-    <span @click="activarSettings()" class="text-primary" style="cursor: pointer;">
+    <span @click="activarSettings()" class="text-primary font-weight-bold transition-link" style="cursor: pointer;">
       {{ nombre }}
     </span>
 
     <!-- MODAL DE EDICIÓN DE USUARIO -->
-    <v-dialog :model-value="modelValue" max-width="600" persistent>
+    <v-dialog v-model="modelValue" max-width="600" persistent>
       <v-card width="600" class="pa-6" rounded="xl" elevation="10">
 
         <!-- HEADER DEL MODAL -->
-        <div class="d-flex justify-space-between">
-          <v-card-title class="text-h5 font-weight-bold">
+        <div class="d-flex justify-space-between align-center">
+          <v-card-title class="text-h5 font-weight-bold px-0 text-grey-darken-4">
             Modificar Cuenta
           </v-card-title>
 
@@ -152,60 +200,81 @@ const eliminarUsuario = async () => {
             icon="mdi-close" 
             variant="text" 
             size="small"
+            :disabled="cargando"
             @click="modelValue = false" 
           />
         </div>
 
         <v-divider class="my-4" />
 
-        <!-- INPUT NOMBRE -->
-        <v-text-field
-          v-model="nombre_edit"
-          label="Nombre"
-          variant="outlined"
-          class="mb-3"
-          prepend-inner-icon="mdi-account"
-        />
+        <!-- FORM: Se añade la referencia 'formRef' -->
+        <v-form ref="formRef" @submit.prevent="actualizarDatos">
 
-        <!-- INPUT CORREO -->
-        <v-text-field
-          v-model="correo"
-          label="Correo"
-          variant="outlined"
-          class="mb-3"
-          prepend-inner-icon="mdi-email"
-        />
+          <!-- INPUT NOMBRE -->
+          <v-text-field
+            v-model="nombre_edit"
+            label="Nombre Completo"
+            variant="outlined"
+            class="mb-3"
+            prepend-inner-icon="mdi-account"
+            :rules="reglas.nombre"
+            hide-details="auto"
+            maxlength="100"
+          />
 
-        <!-- INPUT PASSWORD (opcional) -->
-        <v-text-field
-          v-model="password"
-          label="Contraseña (Opcional)"
-          :type="show1 ? 'text' : 'password'"
-          variant="outlined"
-          class="mb-4"
-          prepend-inner-icon="mdi-lock"
-          @click:append="show1 = !show1"
-          :append-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'"
-        />
+          <!-- INPUT CORREO -->
+          <v-text-field
+            v-model="correo"
+            label="Correo Electrónico"
+            variant="outlined"
+            class="mb-3"
+            prepend-inner-icon="mdi-email"
+            :rules="reglas.correo"
+            hide-details="auto"
+            maxlength="100"
+          />
 
-        <!-- BOTÓN GUARDAR -->
-        <v-btn
-          color="primary"
-          block
-          class="mb-3"
-          prepend-icon="mdi-content-save"
-          @click="actualizarDatos"
-        >
-          Guardar Cambios
-        </v-btn>
+          <!-- INPUT PASSWORD (opcional) -->
+          <v-text-field
+            v-model="password"
+            label="Contraseña (Dejar vacío si no deseas cambiarla)"
+            :type="show1 ? 'text' : 'password'"
+            variant="outlined"
+            class="mb-5"
+            prepend-inner-icon="mdi-lock"
+            @click:append="show1 = !show1"
+            :append-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'"
+            :rules="reglas.password"
+            hide-details="auto"
+            maxlength="50"
+          />
+
+          <!-- BOTÓN GUARDAR -->
+          <v-btn
+            color="primary"
+            block
+            size="large"
+            rounded="lg"
+            class="mb-3 text-capitalize font-weight-bold"
+            prepend-icon="mdi-content-save"
+            type="submit"
+            :loading="cargando"
+          >
+            Guardar Cambios
+          </v-btn>
+
+        </v-form>
 
         <!-- BOTÓN LOGOUT -->
         <v-btn
-          color="grey-darken-1"
+          color="grey-darken-2"
           variant="tonal"
           block
-          class="mb-3"
+          size="large"
+          rounded="lg"
+          class="mb-3 text-capitalize font-weight-bold"
           prepend-icon="mdi-logout"
+          :disabled="cargando"
           @click="cerrarSesion"
         >
           Cerrar sesión
@@ -216,7 +285,11 @@ const eliminarUsuario = async () => {
           color="error"
           variant="tonal"
           block
+          size="large"
+          rounded="lg"
+          class="text-capitalize font-weight-bold"
           prepend-icon="mdi-delete"
+          :disabled="cargando"
           @click="mostrarDialogEliminar = true"
         >
           Eliminar cuenta
@@ -243,7 +316,7 @@ const eliminarUsuario = async () => {
           <v-btn 
             variant="outlined" 
             color="grey-darken-1"
-            class="px-6"
+            class="px-6 text-capitalize"
             :disabled="loadingEliminar"
             @click="mostrarDialogEliminar = false"
           >
@@ -253,7 +326,7 @@ const eliminarUsuario = async () => {
           <v-btn
             color="error"
             variant="flat"
-            class="px-6"
+            class="px-6 text-capitalize font-weight-bold"
             :loading="loadingEliminar"
             @click="eliminarUsuario"
           >
@@ -266,14 +339,3 @@ const eliminarUsuario = async () => {
 
   </div>
 </template>
-
-<style scoped>
-:deep(.v-field input:-webkit-autofill),
-:deep(.v-field input:-webkit-autofill:hover), 
-:deep(.v-field input:-webkit-autofill:focus),
-:deep(.v-field input:-webkit-autofill:active) {
-  -webkit-box-shadow: 0 0 0px 1000px white inset !important;
-  -webkit-text-fill-color: #000000 !important;
-  transition: background-color 5000s ease-in-out 0s;
-}
-</style>

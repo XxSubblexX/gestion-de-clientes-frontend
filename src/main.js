@@ -14,6 +14,7 @@ import ClientesCRUD from './views/clientesCRUD.vue'
 // Mantén tu importación original si el archivo está ahí arriba
 import App from '../App.vue' 
 import UsuariosCRUD from './views/usuariosCRUD.vue'
+import ProductosCRUD from './views/productosCRUD.vue'
 
 // 3. Configuración del Router
 const router = createRouter({
@@ -21,7 +22,8 @@ const router = createRouter({
   routes: [
     { path: '/login', name: 'inicioSesion', component: InicioSesion },
     { path: '/clientes', name: 'clientesCRUD', component: ClientesCRUD },
-    { path: '/usuarios', name: 'usuariosCRUD', component: UsuariosCRUD}
+    { path: '/usuarios', name: 'usuariosCRUD', component: UsuariosCRUD},
+    { path: '/productos', name: 'productosCRUD', component: ProductosCRUD}
   ]
 })
 
