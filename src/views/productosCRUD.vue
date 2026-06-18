@@ -14,7 +14,7 @@
             </h2>
             <div class="d-flex align-center text-subtitle-2 text-medium-emphasis">
               <v-icon size="16" class="mr-1" color="grey">mdi-account-circle-outline</v-icon>
-              <span class="mr-1">Usuario activo:</span>
+              <span class="mr-1">Usuario:</span>
                 <!-- Escuchamos @notificar también aquí si userSettings usa snackbars -->
                 <userSettings
                   :nombre="nombre"
@@ -221,7 +221,7 @@ const actualizarProductoEnLaLista = (producto_actualizado) => {
 
 const removerProductoDeLaLista = (id) => {
   productos.value = productos.value.filter(
-    c => c.id_usuario !== id
+    p => p.id_producto !== id
   )
   manejarNotificacion({ texto: "Producto eliminado correctamente", color: "error" })
 }
@@ -236,8 +236,10 @@ onMounted(async () => {
       headers: { token: `Bearer ${localStorage.getItem("token")}` }
     })
     nombre.value = respuesta.data.nombre
-  } catch (e) {
-    console.error(e)
+  } catch (error) {
+     if (error.response?.status === 401) {
+      router.push({ name: 'inicioSesion'}); 
+  }
   }
   await cargarProductos()
 })

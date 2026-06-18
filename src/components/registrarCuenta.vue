@@ -1,6 +1,9 @@
 <script setup>
 import { ref } from 'vue';
 import axios from 'axios';
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const nombre = ref("");
 const correo = ref("");
@@ -66,10 +69,9 @@ const guardarUsuario = async () =>  {
   try {
     const token = localStorage.getItem("token")
     if (!token) {
-      alert('Tu sesión ha expirado. Por favor inicia sesión nuevamente.')
+      router.push({ name: 'inicioSesion'}); 
       return
     }
-
     // Limpieza de datos (Seguridad del lado del cliente)
     const datos = {
       nombre: nombre.value.trim(),
@@ -85,8 +87,9 @@ const guardarUsuario = async () =>  {
     emit('usuarioGuardado', datos)
     cerrar()
   } catch (error) {
-    console.error("Error al registrar usuario", error);
-    alert("No se pudo crear la cuenta. Intenta de nuevo.");
+    if (error.response?.status === 401) {
+      router.push({ name: 'inicioSesion'}); 
+  }
   } finally {
     cargando.value = false;
   }

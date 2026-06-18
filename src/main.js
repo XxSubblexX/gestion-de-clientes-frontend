@@ -20,6 +20,7 @@ import ProductosCRUD from './views/productosCRUD.vue'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    { path: '/', redirect: '/login' },
     { path: '/login', name: 'inicioSesion', component: InicioSesion },
     { path: '/clientes', name: 'clientesCRUD', component: ClientesCRUD },
     { path: '/usuarios', name: 'usuariosCRUD', component: UsuariosCRUD},

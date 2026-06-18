@@ -28,11 +28,11 @@ const manejarNotificacion = (alerta) => {
 }
 
 const cabeceras = ref([
+  { title: 'Acciones', key: 'acciones', align: 'center', sortable: false },
   { title: 'NIT', key: 'nit', align: 'center', sortable: true },
   { title: 'Razón Social', key: 'razon_social', align: 'start', sortable: true },
   { title: 'Correo', key: 'correo', align: 'start' },
-  { title: 'Teléfono', key: 'telefono', align: 'center' }, 
-  { title: 'Acciones', key: 'acciones', align: 'center', sortable: false }
+  { title: 'Teléfono', key: 'telefono', align: 'center' }
 ])
 
 const mostrarAjustesDeUsuario = ref(false)
@@ -91,8 +91,11 @@ onMounted(async () => {
       headers: { token: `Bearer ${localStorage.getItem("token")}` }
     })
     nombre.value = respuesta.data.nombre
-  } catch (e) {
-    console.error(e)
+  } catch (error) {
+
+    if (error.response?.status === 401) {
+      router.push({ name: 'inicioSesion'}); 
+  }
   }
   await cargarClientes()
 })

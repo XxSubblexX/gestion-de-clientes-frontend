@@ -70,6 +70,7 @@
           prepend-inner-icon="mdi-currency-usd"
           :rules="reglas.precio"
           hide-details="auto"
+          @keydown="handleKeydown"
         />
 
         <!-- INPUT OCULTO CONTROLADO POR LA TARJETA -->
@@ -159,6 +160,9 @@
 <script setup>
 import { ref } from 'vue';
 import axios from 'axios';
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const nombre = ref("")
 const descripcion = ref("")
@@ -195,6 +199,17 @@ const reglas = {
   ]
 }
 
+const handleKeydown = (event) => {
+  const invalidKeys = ['-', '+', 'e', 'E']
+
+  if (invalidKeys.includes(event.key)) {
+    event.preventDefault()
+  }
+
+  if (event.key === 'ArrowDown' && Number(event.target.value) <= 0) {
+    event.preventDefault()
+  }
+}
 // Disparar el selector de archivos al presionar la tarjeta
 const activarSelectorArchivo = () => {
   if (!foto.value && fileInputRef.value) {
@@ -248,7 +263,7 @@ const abrirModalNuevo = async () => {
 
 const cerrar = () => {
   modelValue.value = false
-  limpiarFormulario()
+  
 }
 
 const limpiarFormulario = () => {
@@ -277,7 +292,7 @@ const guardarProducto = async () =>  {
   try {
     const token = localStorage.getItem("token")
     if (!token) {
-      alert('Tu sesión ha expirado. Por favor inicia sesión nuevamente.')
+      router.push({ name: 'inicioSesion'}); 
       return
     }
 
@@ -297,9 +312,11 @@ const guardarProducto = async () =>  {
     
     emit('productoGuardado', respuesta.data)
     cerrar()
+    limpiarFormulario()
   } catch (error) {
-    console.error("Error al registrar producto", error);
-    alert("No se pudo registrar el producto. Intenta de nuevo.");
+    if (error.response?.status === 401) {
+      router.push({ name: 'inicioSesion'}); 
+  }
   } finally {
     cargando.value = false;
   }

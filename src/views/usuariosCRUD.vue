@@ -219,8 +219,10 @@ onMounted(async () => {
       headers: { token: `Bearer ${localStorage.getItem("token")}` }
     })
     nombre.value = respuesta.data.nombre
-  } catch (e) {
-    console.error(e)
+  } catch (error) {
+    if (error.response?.status === 401) {
+      router.push({ name: 'inicioSesion'}); 
+  }
   }
   await cargarUsuarios()
 })

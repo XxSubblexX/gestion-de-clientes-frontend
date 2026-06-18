@@ -113,7 +113,9 @@
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const props = defineProps(['usuario'])
 const emit = defineEmits(['usuarioActualizado'])
 
@@ -183,7 +185,7 @@ const actualizarUsuario = async () => {
   try {
     const token = localStorage.getItem("token")
     if (!token) {
-      alert('Tu sesión ha expirado. Por favor inicia sesión nuevamente.')
+      router.push({ name: 'inicioSesion'}); 
       return
     }
 
@@ -211,7 +213,7 @@ const actualizarUsuario = async () => {
     cerrar()
   } catch (error) {
     console.error(error)
-    alert("Error al actualizar usuario. Verifica los datos e intenta de nuevo.")
+    
   } finally {
     cargando.value = false
   }

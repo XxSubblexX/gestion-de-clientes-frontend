@@ -112,6 +112,9 @@
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const emit = defineEmits(['clienteGuardado'])
 
@@ -174,7 +177,7 @@ const guardarCliente = async () => {
   try {
     const token = localStorage.getItem("token")
     if (!token) {
-      alert('Tu sesión ha expirado. Por favor inicia sesión nuevamente.')
+      router.push({ name: 'inicioSesion'}); 
       return
     }
 
@@ -203,8 +206,9 @@ const guardarCliente = async () => {
     cerrarDialog()
 
   } catch (error) {
-    console.error(error)
-    alert('Error al registrar cliente. Verifica los datos e intenta de nuevo.')
+    if (error.response?.status === 401) {
+      router.push({ name: 'inicioSesion'}); 
+  }
   } finally {
     cargando.value = false
   }

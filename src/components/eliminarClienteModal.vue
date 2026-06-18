@@ -61,6 +61,9 @@
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const props = defineProps(['cliente', 'usuario'])
 const emit = defineEmits(['eliminado', 'notificar']) // Agregamos 'notificar'
@@ -95,7 +98,9 @@ const ejecutarEliminacion = async () => {
     
     cerrar()
   } catch (error) {
-    console.error("Error al eliminar el cliente:", error)
+    if (error.response?.status === 401) {
+      router.push({ name: 'inicioSesion'}); 
+  }
     // Mandamos el mensaje de error al padre para evitar usar alert()
     emit('notificar', { texto: "No se pudo eliminar el cliente. Inténtalo de nuevo.", color: "error" })
   } finally {

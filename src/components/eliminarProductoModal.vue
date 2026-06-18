@@ -61,6 +61,9 @@
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const nombre = ref('')
 
@@ -73,7 +76,7 @@ const cargando = ref(false)
 const cargarDialog = () => {
   modelValue.value = true
  nombre.value = props.producto.nombre 
-  console.log(props.producto.nombre)
+  console.log(props.producto)
 }
 
 const cerrar = () => {
@@ -83,9 +86,8 @@ const cerrar = () => {
 const ejecutarEliminacion = async () => {
   try {
     cargando.value = true
-    await axios.delete(
+    const respuesta = await axios.delete(
   `http://localhost:3000/productos/${props.producto.id_producto}`,
-    { estado: false },
   {
     headers: {
       token: `Bearer ${localStorage.getItem("token")}`
@@ -94,11 +96,13 @@ const ejecutarEliminacion = async () => {
 )
 
     // Mandamos el mensaje de éxito al padre antes de cerrar
-    emit('eliminado', props.cliente.id_cliente)
+    emit('eliminado', props.producto.id_producto)
     
     cerrar()
   } catch (error) {
-    console.error("Error al eliminar el cliente:", error)
+    if (error.response?.status === 401) {
+      router.push({ name: 'inicioSesion'}); 
+  }
     // Mandamos el mensaje de error al padre para evitar usar alert()
     emit('notificar', { texto: "No se pudo eliminar el cliente. Inténtalo de nuevo.", color: "error" })
   } finally {

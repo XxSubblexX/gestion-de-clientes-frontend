@@ -115,16 +115,16 @@
           hide-details="auto"
           maxlength="255"
         />
-
         <v-text-field
           v-model="precio"
           label="Precio de Venta"
-          type="number"
+          type=number
           variant="outlined"
           class="mb-3"
           prepend-inner-icon="mdi-currency-usd"
           :rules="reglas.precio"
           hide-details="auto"
+          @keydown="handleKeydown"
         />
 
         <!-- SWITCH DE ESTADO -->
@@ -175,6 +175,9 @@
 <script setup>
 import { ref } from 'vue';
 import axios from 'axios';
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const nombre = ref("")
 const descripcion = ref("")
@@ -261,6 +264,17 @@ const crearUrlTemporal = (archivo) => {
   return window.URL.createObjectURL(archivo);
 }
 
+const  handleKeydown = (event) => {
+  const invalidKeys = ['-', '+', 'e', 'E']
+
+  if (invalidKeys.includes(event.key)) {
+    event.preventDefault()
+  }
+
+  if (event.key === 'ArrowDown' && Number(event.target.value) <= 0) {
+    event.preventDefault()
+  }
+}
 const abrirModalNuevo = async () => {
   if (formRef.value) formRef.value.resetValidation();
   errorFoto.value = "";
@@ -279,6 +293,7 @@ const abrirModalNuevo = async () => {
   } else {
     nombreFoto.value = "Sin archivo previo"
   }
+  console.log(props.producto)
 }
 
 const cerrar = () => {
@@ -305,7 +320,7 @@ const guardarProducto = async () =>  {
   try {
     const token = localStorage.getItem("token")
     if (!token) {
-      alert('Tu sesión ha expirado. Por favor inicia sesión nuevamente.')
+      router.push({ name: 'inicioSesion'}); 
       return
     }
 
