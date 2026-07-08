@@ -293,7 +293,6 @@ const abrirModalNuevo = async () => {
   } else {
     nombreFoto.value = "Sin archivo previo"
   }
-  console.log(props.producto)
 }
 
 const cerrar = () => {

@@ -76,7 +76,6 @@ const cargando = ref(false)
 const cargarDialog = () => {
   modelValue.value = true
  nombre.value = props.producto.nombre 
-  console.log(props.producto)
 }
 
 const cerrar = () => {

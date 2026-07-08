@@ -33,6 +33,7 @@
           :rules="reglas.nit"
           hide-details="auto"
           maxlength="10"
+          @keydown="handleKeydownNIT"     
         />
 
         <v-text-field
@@ -67,8 +68,9 @@
           prepend-inner-icon="mdi-phone"
           :rules="reglas.telefono"
           hide-details="auto"
-          maxlength="10"
-        />
+          @input="limitarTelefono"
+          @keydown="handleKeydown"        
+          />
 
         <!-- BOTONES -->
         <v-card-actions class="px-0 pt-2">
@@ -125,7 +127,7 @@ const reglas = {
   nit: [
     v => !!v || 'El NIT es obligatorio',
     v => /^[0-9\-]+$/.test(v) || 'El NIT solo debe contener números y guiones',
-    v => (v && v.trim().length >= 5) || 'El NIT debe ser más largo'
+    v => (v && v.trim().length >= 8) || 'El NIT debe tener al menos 8 caracteres'
   ],
   razonSocial: [
     v => !!v || 'La razón social es obligatoria',
@@ -138,10 +140,36 @@ const reglas = {
   ],
   telefono: [
     v => !!v || 'El teléfono es obligatorio',
-    v => (v && v.toString().length >= 7) || 'El número es muy corto'
+    v => (v && v.toString().length >= 10) || 'El número debe ser de 10 digitos'
   ]
 }
 
+const limitarTelefono = () => {
+  if (telefono.value) {
+    telefono.value = telefono.value.toString().slice(0, 10)
+  }
+}
+
+const handleKeydown = (event) => {
+  const invalidKeys = ['-', '+', 'e', 'E']
+
+  if (invalidKeys.includes(event.key)) {
+    event.preventDefault()
+  }
+
+  if (event.key === 'ArrowDown' && Number(event.target.value) <= 0) {
+    event.preventDefault()
+  }
+}
+
+const handleKeydownNIT = (event) => {
+  const invalidKeys = ['+', 'e', 'E']
+
+  if (invalidKeys.includes(event.key)) {
+    event.preventDefault()
+  }
+
+}
 // cargar datos cuando se abre
 const cargarDialog = () => {
   if (formRef.value) {

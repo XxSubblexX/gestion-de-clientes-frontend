@@ -82,7 +82,6 @@ const cerrar = () => {
 const ejecutarEliminacion = async () => {
   try {
     cargando.value = true
-    console.log(props.usuario)
     await axios.delete(
   `http://localhost:3000/usuarios/${props.usuario.id_usuario}`,
   {

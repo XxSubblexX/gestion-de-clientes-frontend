@@ -82,7 +82,6 @@ const cerrar = () => {
 const ejecutarEliminacion = async () => {
   try {
     cargando.value = true
-    console.log(props.cliente)
     await axios.patch(
   `http://localhost:3000/clientes/${props.cliente.id_cliente}`,
     { estado: false },

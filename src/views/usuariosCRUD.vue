@@ -79,6 +79,8 @@
         hover
         class="elevation-0 text-grey-darken-2"
         no-data-text="No se encontraron usuarios registrados"
+        items-per-page-text="Usuarios por página:"
+        page-text="{0}-{1} de {2}"
       >
         <!-- Estilo Personalizado para el Estado -->
         <template #item.estado="{ item }">
@@ -202,7 +204,6 @@ const actualizarUsuarioEnLaLista = (usuario_actualizado) => {
 }
 
 const removerUsuarioDeLaLista = (id) => {
-  console.log(id)
   usuarios.value = usuarios.value.filter(
     c => c.id_usuario !== id
   )
@@ -238,6 +239,7 @@ onMounted(async () => {
 :deep(.v-data-table__tr:hover) {
   background: #f8fafc !important;
 }
+
 :deep(.v-data-table-header__content) {
   font-weight: 700 !important;
   color: #475569 !important;

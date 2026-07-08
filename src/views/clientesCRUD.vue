@@ -49,12 +49,10 @@ const actualizarFila = (esInformacionQueMeLlego) => {
 
 const cargarClientes = async () => {
   try {
-    const respuesta = await axios.get(`http://localhost:3000/clientes`, {
+    const respuesta = await axios.get(`http://localhost:3000/clientes/${id_usuario.value}`, {
       headers: { token: `Bearer ${localStorage.getItem("token")}` }
     })
     clientes.value = respuesta.data
-    const clientesActivos = clientes.value.filter(u => u.estado === true)
-    clientes.value = clientesActivos
   } catch (error) {
     console.error("Error al cargar clientes:", error)
     if (error.response?.status === 401) {
@@ -108,7 +106,7 @@ onMounted(async () => {
       <v-row align="center">
         <v-col cols="12" sm="8" class="d-flex align-center">
           <v-avatar color="primary-lighten-4" size="48" class="mr-4">
-            <v-icon color="primary" size="28">mdi-account-group</v-icon>
+            <v-icon color="primary" size="28">mdi-domain</v-icon>
           </v-avatar>
           <div>
             <h2 class="text-h5 font-weight-bold text-grey-darken-3 mb-1">
@@ -133,7 +131,15 @@ onMounted(async () => {
         </v-col>
       </v-row>
     </v-card>
-
+ <v-btn 
+      to="/compras" 
+      text="Ir a compras" 
+      prepend-icon="mdi-cart"
+      variant="tonal"
+      color="secondary"
+      class="mb-6 text-capitalize font-weight-bold"
+      rounded="lg"
+    />
     <!-- TABLE CARD WITH ACTIONS & SEARCH -->
     <v-card class="overflow-hidden" rounded="xl" elevation="4">
       
@@ -166,6 +172,8 @@ onMounted(async () => {
         hover
         class="elevation-0 text-grey-darken-2"
         no-data-text="No se encontraron clientes registrados"
+        items-per-page-text="Clientes por página:"
+        page-text="{0}-{1} de {2}"
       >
 
         <!-- Acciones del Cliente -->

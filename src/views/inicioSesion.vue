@@ -10,6 +10,16 @@ const info = ref("");
 const rol = ref(null);
 const router = useRouter(); 
 
+const snackbar = ref(false)
+const snackbarTexto = ref("")
+const snackbarColor = ref("success")
+
+const manejarNotificacion = (alerta) => {
+  snackbarTexto.value = alerta.texto
+  snackbarColor.value = alerta.color
+  snackbar.value = true
+}
+
 // Controladores visuales de Vuetify
 const cargando = ref(false);
 const mostrarPassword = ref(false);
@@ -43,7 +53,7 @@ const guardarToken = async () =>  {
 
   } catch (error) {
     console.error("Error al iniciar sesión", error);
-    alert("Credenciales incorrectas");
+    manejarNotificacion({ texto:"Credenciales incorrectas", color: "error" })
   } finally {
     cargando.value = false;
   }
@@ -109,7 +119,23 @@ const guardarToken = async () =>  {
           Ingresar
         </v-btn>
       </v-form>
-
+      <v-snackbar
+      v-model="snackbar"
+      :color="snackbarColor"
+      timeout="3000"
+      rounded="lg"
+      elevation="10"
+    >
+      {{ snackbarTexto }}
+      
+      <template v-slot:actions>
+        <v-btn
+          variant="text"
+          @click="snackbar = false"
+          icon="mdi-close"
+        />
+      </template>
+    </v-snackbar>
 
     </v-card>
   </v-container>

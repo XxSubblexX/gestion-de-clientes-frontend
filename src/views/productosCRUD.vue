@@ -80,6 +80,8 @@
         hover
         class="elevation-0 text-grey-darken-2"
         no-data-text="No se encontraron productos registrados"
+        items-per-page-text="Productos por página:"
+        page-text="{0}-{1} de {2}"
       >
         <!-- Miniatura de la Imagen con Esquinas Suaves -->
         <template #item.fotografia_principal_url="{ item }">

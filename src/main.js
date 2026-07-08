@@ -15,6 +15,7 @@ import ClientesCRUD from './views/clientesCRUD.vue'
 import App from '../App.vue' 
 import UsuariosCRUD from './views/usuariosCRUD.vue'
 import ProductosCRUD from './views/productosCRUD.vue'
+import ComprasVista from './views/comprasVista.vue'
 
 // 3. Configuración del Router
 const router = createRouter({
@@ -24,7 +25,8 @@ const router = createRouter({
     { path: '/login', name: 'inicioSesion', component: InicioSesion },
     { path: '/clientes', name: 'clientesCRUD', component: ClientesCRUD },
     { path: '/usuarios', name: 'usuariosCRUD', component: UsuariosCRUD},
-    { path: '/productos', name: 'productosCRUD', component: ProductosCRUD}
+    { path: '/productos', name: 'productosCRUD', component: ProductosCRUD},
+    { path: '/compras', name: 'comprasVista', component: ComprasVista}
   ]
 })
 
